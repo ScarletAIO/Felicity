@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS guilds (
+    id TEXT PRIMARY KEY,
+    name TEXT,
+    icon TEXT,
+    owner TEXT,
+    log_channel TEXT NOT NULL,
+    welcome_channel TEXT NOT NULL,
+    welcome_message TEXT NOT NULL,
+    leave_channel TEXT NOT NULL,
+    leave_message TEXT NOT NULL,
+    toggle_welcome BOOLEAN NOT NULL,
+    toggle_leave BOOLEAN NOT NULL,
+    toggle_log BOOLEAN NOT NULL,
+    mass_mentions BOOLEAN NOT NULL,
+    mass_mentions_count INTEGER NOT NULL,
+    mass_mentions_time INTEGER NOT NULL,
+    mass_mentions_action TEXT NOT NULL,
+    toggle_mentions BOOLEAN NOT NULL,
+    toggle_links BOOLEAN NOT NULL,
+    toggle_invites BOOLEAN NOT NULL,
+    tolerance INTEGER NOT NULL DEFAULT -5,
+    toggle_ai BOOLEAN NOT NULL
+);
