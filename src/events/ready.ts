@@ -19,7 +19,7 @@ module.exports = {
 
         // @ts-ignore
         client.commands = new Collection();
-        const cmds = path.resolve("dist/commands");
+        const cmds = path.resolve("dist/src/commands");
         const cmdFiles = fs.readdirSync(cmds).filter((file) => file.endsWith(".js"));
 
         for (const cmd of cmdFiles) {

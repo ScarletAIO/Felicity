@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import { Guild } from "discord.js";
 import { config } from "dotenv";
 import * as fs from "fs";
 import path from "path";
@@ -51,8 +52,13 @@ export default new class DbHandler {
         return this.db.prepare("INSERT INTO guilds (id, name, icon, owner) VALUES (?, ?, ?, ?)").run(id, name, icon, owner);
     }
 
-    createUser(id: string, name: string, discriminator: string, avatar: string, bot: boolean, guild: string) {
-        return this.db.prepare("INSERT INTO users (id, name, discriminator, avatar, bot, guild) VALUES (?, ?, ?, ?, ?, ?)").run(id, name, discriminator, avatar, bot, guild);
+    createUser(id: string, name: string, discriminator: string, avatar: string, bot: any) {
+        if (bot == true) {
+            bot = 1;
+        } else {
+            bot = 0;
+        }
+        return this.db.prepare("INSERT INTO users (id, name, discriminator, avatar, bot) VALUES (?, ?, ?, ?, ?)").run(id, name, discriminator, avatar, bot);
     }
 
     updateGuild(id: string, key: string, value: string | boolean | number) {
@@ -61,6 +67,15 @@ export default new class DbHandler {
 
     updateUser(id: string, key: string, value: string | boolean | number) {
         return this.db.prepare(`UPDATE users SET ${key} = ? WHERE id = ?`).run(value, id);
+    }
+
+    setAFK(id: string, set: any, reason: string) {
+        if (set == true) {
+            set = 1;
+        } else {
+            set = 0;
+        }
+        return this.db.prepare("UPDATE users SET afk = ?, afkReason = ? WHERE id = ?").run(set, reason, id);    
     }
 
     deleteGuild(id: string) {
@@ -102,5 +117,23 @@ export default new class DbHandler {
                 return false ? 0 : 200;
             }
         });
+    }
+
+    async updateAutomod(
+        guild: Guild["id"]
+    ) {
+        const keys = import("../../config.json")
+        console.log(keys)
+        const guildData = this.getGuild(guild);
+        if (!guildData) {
+            throw new Error("Guild not found");
+        }
+        for (const key in keys) {
+            if (Object.prototype.hasOwnProperty.call(keys, key)) {
+                // @ts-ignore
+                const value:any = await keys[key];
+                this.updateGuild(guild, key, value);
+            }
+        }
     }
 }

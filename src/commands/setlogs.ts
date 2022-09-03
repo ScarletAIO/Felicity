@@ -2,14 +2,14 @@ import { SlashCommandBuilder, CommandInteraction, channelMention } from "discord
 import db from "../db/db";
 
 module.exports = {
-    beta: true,
+    beta: false,
     data: new SlashCommandBuilder()
         .setName("setlogs")
         .setDescription("Sets the logs channel for the Scarlet API.")
         .setDMPermission(false)
         .addChannelOption(option => option.setName("channel").setDescription("The channel to set the logs to.")),
     async execute(interaction: CommandInteraction) {
-        if (!interaction.memberPermissions?.has("Administrator")) {
+        if (!interaction.memberPermissions?.has("ManageGuild")) {
             return await interaction.reply({ content: "You do not have permission to use this command.", ephemeral: true });
         };
         const channel = interaction.options.get("channel")?.value as string;

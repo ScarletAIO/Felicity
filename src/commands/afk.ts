@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
+import db from "../db/db";
 
 module.exports = {
-    beta: true,
     data: new SlashCommandBuilder()
         .setName('afk')
         .setDescription('Sets your AFK status.')
@@ -12,6 +12,24 @@ module.exports = {
         if (!reason) {
             reason = 'No reason provided.';
         }
-        await interaction.reply({ content: `Set your AFK status to: ${reason}`, ephemeral: true });
+        const user = await db.getUser(interaction.user.id);
+        if (!user) {
+            db.createUser(
+                interaction.user.id, 
+                interaction.user.username, 
+                interaction.user.discriminator, 
+                interaction.user.avatarURL() as string, 
+                interaction.user.bot
+            );
+            
+            db.setAFK(interaction.user.id, true, reason);
+            await interaction.reply({ content: `You are now AFK! Reason: ${reason}`, ephemeral: true });
+        }
+        if (user.afk) {
+            await interaction.reply({ content: `You are already AFK! Reason: ${user.afkReason}`, ephemeral: true });
+        } else {
+            db.setAFK(interaction.user.id, true, reason);
+            await interaction.reply({ content: `You are now AFK! Reason: ${reason}`, ephemeral: true });
+        }
     }
 }

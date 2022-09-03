@@ -1,5 +1,4 @@
 import * as console from "fancy-log";
-console.info("Done compiling!");
 console.info("Loading Modules...")
 import { config } from "dotenv";
 config();
@@ -11,7 +10,12 @@ console.info("Finished loading modules!")
 console.info("Starting bot...");
 const { TOKEN: token } = process.env;
 const client = new Client({
-    intents: [ GatewayIntentBits.Guilds, GatewayIntentBits.DirectMessages, GatewayIntentBits.MessageContent ]
+    intents: [ 
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.DirectMessages, 
+        GatewayIntentBits.MessageContent 
+    ]
 });
 const events = path.join(__dirname, "events");
 const eventFiles = fs.readdirSync(events).filter((file) => file.endsWith(".js"));

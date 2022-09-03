@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "clear && echo \"Compiling...\" && tsc && node dist/main.js"
+    "build": "rm -rf dist/ && clear && echo \"Compiling...\" && tsc && cp src/db/*.sql dist/src/db/ && echo \"Done.\"",
+    "start": "clear && node dist/src/main.js"
   },
   "author": "",
   "license": "ISC",

@@ -37,7 +37,7 @@ module.exports = {
                     },
                     {
                         name: "Deleted At",
-                        value: `${time(Date.now(), 'R')}`,
+                        value: `${time(new Date, 'R')}`,
                     }
                 ])
                 .setFooter({

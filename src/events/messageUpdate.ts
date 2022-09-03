@@ -1,6 +1,8 @@
+import axios from "axios";
 import { Message, EmbedBuilder, time } from "discord.js";
-import scarletai from "scarletai.js";
 import db from "../db/db";
+import MassHandler from "../handlers/MassItemChecks";
+import blacklist from "../../blacklist.json";
 
 module.exports = {
     name: "messageUpdate",
@@ -9,20 +11,43 @@ module.exports = {
         try 
         {
             if (!oldMessage.guild) { return; }
+
+            await MassHandler(newMessage);
+
             const guild = await db.getGuild(oldMessage.guildId as string);
+            const user = await db.getUser(newMessage.author.id as string);
+            const bl: {
+                users: [string]
+            } = JSON.parse(JSON.stringify(blacklist));
+            if (!user && !bl.users.includes(newMessage.author.id)) {
+                db.createUser(
+                    newMessage.author.id, 
+                    newMessage.author.username, 
+                    newMessage.author.discriminator, 
+                    newMessage.author.avatarURL() as string, 
+                    newMessage.author.bot
+                );
+            }
+            if (guild === undefined) { 
+                db.createGuild(
+                    newMessage.guildId as string, 
+                    newMessage.guild?.name as string, 
+                    newMessage.guild?.iconURL() as string,
+                    newMessage.guild?.ownerId as string
+                )
+            }
             let logId = guild.log_channel as string;   
 
             if (oldMessage.content === newMessage.content) { return; }
             if (oldMessage.author.bot) { return; }
             
-            const ai = scarletai;
-            const response = await ai.analyzer(escape(newMessage.content)).then((res:any) => {
-                if (res.status === "success") {
-                    return res.analyze.score;
-                }
-            });
+            const response = (await axios.post("https://api.scarletai.xyz/v3/analyze/msg", {
+                text: newMessage.content,
+            }))?.data.analyze.score;
 
-            if (response <= (guild.tolerance as number)) {
+            const threshold = guild.tolerance as number;
+
+            if ((response <= threshold) && guild.toggle_ai == true) {
                 const message = newMessage; // for readability
                 return (
                     message.delete(),
@@ -54,7 +79,7 @@ module.exports = {
                                     .setColor("Red")
                                     .setTimestamp();
                                 // @ts-ignore
-c.send({ embeds: [embed] });
+                                c.send({ embeds: [embed] });
                             })
                         }
                     })
@@ -92,7 +117,7 @@ c.send({ embeds: [embed] });
             if (!LogChannel) { return; }
             LogChannel.fetch().then((c) => {
                 // @ts-ignore
-c.send({embeds: [LogEmbed]});
+                c.send({embeds: [LogEmbed]});
             })
         }
         catch(e)

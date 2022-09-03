@@ -2,13 +2,13 @@
 import { CommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.js";
 
 module.exports = {
-    beta: true,
+    beta: false,
     data: new SlashCommandBuilder()
         .setName("scarlet-aiconfig")
         .setDescription("Sets the AI configuration for the Scarlet API.")
         .setDMPermission(false),
     async execute(interaction: CommandInteraction) {
-        if (!interaction.memberPermissions?.has("Administrator")) {
+        if (!interaction.memberPermissions?.has("ManageGuild")) {
             await interaction.reply({ content: "You do not have permission to use this command.", ephemeral: true });
             return;
         };

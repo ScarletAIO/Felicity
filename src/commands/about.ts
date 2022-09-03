@@ -12,7 +12,7 @@ module.exports =  {
                 "iconURL": interaction.client.user?.avatarURL() as string
             })
             .setColor("Blue")
-            .setTitle("About Me")
+            .setTitle("About Me (click here for the invite link)")
             .setDescription("I'm a support bot for handling automated moderation and more!")
             .addFields([
                 {
@@ -41,6 +41,8 @@ module.exports =  {
                     "inline": true
                 }
             ])
+            // Set the invite URL
+            .setURL("https://discord.com/api/oauth2/authorize?client_id=1011934656662339645&permissions=8&scope=bot%20applications.commands")
             .setTimestamp();
         await interaction.reply({embeds: [embed], ephemeral: true});
     }

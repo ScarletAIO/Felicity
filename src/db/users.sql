@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT,
     discriminator TEXT,
     avatar TEXT,
-    bot BOOLEAN NOT NULL,
-    guild TEXT NOT NULL,
-    FOREIGN KEY (guild) REFERENCES guilds(id) ON DELETE CASCADE
+    bot BOOLEAN,
+    guild TEXT,
+    afk BOOLEAN NOT NULL DEFAULT FALSE,
+    afkReason TEXT
 );
