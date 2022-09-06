@@ -14,16 +14,14 @@ module.exports = {
         }
         else if (interaction.isButton()) {
             console.info("Button interaction detected.");
-            console.log(interaction.customId);
             // get the button that was pressed
             const button = interaction.customId;
             // get the guild
             const guild = interaction.guild;
             if (button === 's-config-yes') {
                 // get the config file
-                const config = require("../../config.json");
+                const config = require("../../../config.json");
                 // update the database
-                console.log(JSON.stringify(config));
                 db.updateAutomod(guild.id);
                 // edit the message
                 await interaction.deferUpdate().then(() => {
@@ -39,6 +37,7 @@ module.exports = {
                 await interaction.update({
                     content: "Ok! Cancelling the options and not saving them to the database...",
                     components: [],
+                    embeds: []
                 });
             }
             else if (button === 'delete-yes') {

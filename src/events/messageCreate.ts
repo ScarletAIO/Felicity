@@ -22,7 +22,7 @@ module.exports = {
         const bl: {
             users: [string]
         } = JSON.parse(JSON.stringify(blacklist));
-        if (!user && !bl.users.includes(message.author.id)) {
+        if (!user) {
             database.createUser(
                 message.author.id, 
                 message.author.username, 
@@ -31,9 +31,11 @@ module.exports = {
                 message.author.bot
             );
         }
-        if (user.afk) {
+        if (user && user.afk == 1) {
             database.setAFK(message.author.id, false, '');
             message.reply(`Welcome back! I removed your AFK status.`);
+        } else {
+            return;
         }
         if (guild === undefined) { 
             database.createGuild(
@@ -57,7 +59,7 @@ module.exports = {
                 const mentionedUser = await database.getUser(mentioned?.id as string);
                 console.log(mentionedUser);
                 // check if the user is AFK
-                if (mentionedUser.afk == true) {
+                if (mentionedUser.afk === 1) {
                     // if they are, send the embed
                     const embed = new EmbedBuilder()
                         .setTitle(`${mentioned?.user.username} is AFK!`)

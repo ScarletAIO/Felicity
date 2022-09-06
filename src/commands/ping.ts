@@ -6,7 +6,7 @@ module.exports = {
         .setName("ping")
         .setDescription("Replies with pong!"),
     async execute(interaction: CommandInteraction) {
-        let msg = await interaction.reply({ content: "Pinging...", fetchReply: true });
+        let msg = await interaction.reply({ content: "Pinging...", fetchReply: true, ephemeral: true });
         let localPing:any = msg.createdTimestamp - interaction.createdTimestamp;
         let apiPing:any = interaction.client.ws.ping;
         if (localPing > 1000) {

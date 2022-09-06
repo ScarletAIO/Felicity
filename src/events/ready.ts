@@ -1,12 +1,13 @@
 import * as console from "fancy-log";
 require("dotenv").config();
-import { ActivityType, Client, Collection } from "discord.js";
+import { ActivityType, Client, Collection, TextChannel } from "discord.js";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
 import path from "node:path";
 import fs from "node:fs";
 import db from "../db/db";
-const { TOKEN: token, BOTID: clientId } = process.env;
+import axios from "axios";
+const { TOKEN: token, BOTID: clientId, DISCORDSTOKEN: discordToken } = process.env;
 
 module.exports = {
     name: "ready",
@@ -14,8 +15,64 @@ module.exports = {
     execute: async (client: Client) => {
         console.info(`Logged in as: ${client.user?.tag} (${client.user?.id})`);
 
-        client.user?.setActivity("with Discord.js", { type: ActivityType.Playing });
-        db.connect();
+        setInterval(() => {
+            let totalUsers = 0;
+            client.guilds.cache.forEach((guild) => {
+                totalUsers += guild.memberCount;
+            });
+            let statuses = [
+                `over ${totalUsers} users`,
+                `over ${client.guilds.cache.size} servers`,
+                `over ${client.channels.cache.size} channels`,
+                `over ${client.emojis.cache.size} emojis`,
+                `over ${client.guilds.cache.reduce((a, b) => a + b.memberCount, 0)} members`,
+                `over ${client.guilds.cache.reduce((a, b) => a + b.channels.cache.size, 0)} channels`,
+                `over ${client.guilds.cache.reduce((a, b) => a + b.emojis.cache.size, 0)} emojis`,
+                `over ${client.guilds.cache.reduce((a, b) => a + b.roles.cache.size, 0)} roles`,
+                `over ${client.guilds.cache.reduce((a, b) => a + (b.premiumSubscriptionCount ?? 0), 0)} boosts`,
+                `over ${client.guilds.cache.reduce((a, b) => a + (b.premiumTier ?? 0), 0)} boost levels`,
+                `over ${client.guilds.cache.reduce((a, b) => a + (b.verificationLevel ?? 0), 0)} verification levels`,
+                `over ${client.guilds.cache.reduce((a, b) => a + (b.explicitContentFilter ?? 0), 0)} explicit content filters`,
+                `over ${client.guilds.cache.reduce((a, b) => a + (b.mfaLevel ?? 0), 0)} mfa levels`,
+                `over ${client.guilds.cache.reduce((a, b) => a + (b.defaultMessageNotifications ?? 0), 0)} default message notifications`,
+                `over ${client.guilds.cache.reduce((a, b) => a + (b.afkTimeout ?? 0), 0)} afk timeouts`,
+                `over ${client.guilds.cache.reduce((a, b) => a + (b.afkChannelId), "")} afk channels`,
+                `over ${client.guilds.cache.reduce((a, b) => a + (b.systemChannelId), "0")} system channels`,
+            ]
+
+            client.user?.setPresence({
+                activities: [
+                    {
+                        name: statuses[Math.floor(Math.random() * statuses.length)],
+                        type: ActivityType.Watching
+                    }
+                ],
+                status: "online"
+            });
+        }, 
+        // 5 mins
+        300000);
+        db.connect(); 
+
+        axios.post("https://discords.com/bots/api/bot/" + clientId, {
+            "server_count": client.guilds.cache.size
+        }, {
+                headers: {
+                    "Authorization": discordToken as string
+                }
+            }
+        );
+
+        (client.channels.cache.get("1015836371937665135") as TextChannel).send({
+            content: "List of servers I'm in:",
+            embeds: [
+                {
+                    title: "Servers",
+                    description: client.guilds.cache.map((guild) => guild.name).join("\n- ").toString(),
+                    color: 0x00ff00
+                }
+            ]
+        })
 
         // @ts-ignore
         client.commands = new Collection();
@@ -44,15 +101,15 @@ module.exports = {
             try {
                 await rest.put(
                     Routes.applicationGuildCommands(clientId as string, guild.id),
-                    { body: commands }
+                    { body: [] }
                 ).then(() => {
-                    console.info(`Successfully registered application commands for ${guild.name}.`);
+                    console.info(`Successfully deleted application commands for ${guild.name}.`);
                 }).catch(console.error);
             } catch (e) {
                 console.error(e);
             }
         }
-        
+        await rest.put(Routes.applicationCommands(clientId as string), {body:commands}).then(()=>{console.info("Commands Deployed")});
         return;
     }
 }

@@ -1,3 +1,8 @@
+# extras
+blacklist.json
+config.json
+db.sqlite
+
 # Logs
 logs
 *.log

@@ -122,18 +122,30 @@ export default new class DbHandler {
     async updateAutomod(
         guild: Guild["id"]
     ) {
-        const keys = import("../../config.json")
+        const keys = require("../../../config.json")
         console.log(keys)
         const guildData = this.getGuild(guild);
         if (!guildData) {
             throw new Error("Guild not found");
         }
-        for (const key in keys) {
-            if (Object.prototype.hasOwnProperty.call(keys, key)) {
-                // @ts-ignore
-                const value:any = await keys[key];
-                this.updateGuild(guild, key, value);
+        console.log(guildData)
+
+        // update each key individually
+        for (const key of Object.keys(keys)) {
+            if (guildData[key] === null) {
+                if (keys[key] === false) {
+                    this.updateGuild(guild, key, 0);
+                } else if (keys[key] === true) {
+                    this.updateGuild(guild, key, 1);
+                }
             }
         }
+
+        // check if the db has been updated
+        const updatedGuildData = this.getGuild(guild);
+        if (!updatedGuildData) {
+            throw new Error("Guild not found");
+        }
+        console.log(updatedGuildData);
     }
 }

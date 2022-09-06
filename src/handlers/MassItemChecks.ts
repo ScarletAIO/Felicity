@@ -5,7 +5,6 @@ export default async function MassHandler(msg: Message) {
     const content = msg.content;
     if (!content || !msg.guild) { return; }
     const guild = database.getGuild(msg?.guild?.id as string);
-    console.log(guild);
     if (!guild) { return; }
     const { 
         mass_mentions: mentionSize, // Global for Channels, Roles, Users

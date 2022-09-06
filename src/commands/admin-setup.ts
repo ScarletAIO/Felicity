@@ -69,8 +69,9 @@ module.exports = {
                             name: "❌",
                         }
                     }
-                ],
+                ]
             }],
+            ephemeral: true
         });
 
     }

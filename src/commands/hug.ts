@@ -5,7 +5,8 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName("hug")
         .setDescription("Hugs a user.")
-        .addUserOption(option => option.setName("user").setDescription("The user to hug.").setRequired(true)),
+        .addUserOption(option => option.setName("user").setDescription("The user to hug.").setRequired(true))
+        .setDMPermission(false),
     async execute(interaction: CommandInteraction) {
         const user = interaction.options.get("user")?.value as string;
         if (!user) {
