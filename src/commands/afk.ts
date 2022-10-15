@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
 import db from "../db/db";
-
+// @ts-ignore
+import blacklist from "../../../blacklist.json";
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('afk')
@@ -13,7 +14,10 @@ module.exports = {
             reason = 'No reason provided.';
         }
         const user = await db.getUser(interaction.user.id);
-        if (!user) {
+        const bl: {
+            users: [string]
+        } = JSON.parse(JSON.stringify(blacklist));
+        if (!user && !bl.users.includes(interaction.user.id)) {
             db.createUser(
                 interaction.user.id, 
                 interaction.user.username, 
@@ -24,12 +28,14 @@ module.exports = {
             
             db.setAFK(interaction.user.id, true, reason);
             await interaction.reply({ content: `You are now AFK! Reason: ${reason}`, ephemeral: true });
+        } else if (bl.users.includes(interaction.user.id)) {
+            await interaction.reply({ content: `It seems that you have blacklisted yourself from my database!\nPlease use </authorize:1019585594579505204> to re-enable this command`, ephemeral: true });
         }
-        if (user.afk) {
+        else if (user.afk) {
             await interaction.reply({ content: `You are already AFK! Reason: ${user.afkReason}`, ephemeral: true });
         } else {
             db.setAFK(interaction.user.id, true, reason);
             await interaction.reply({ content: `You are now AFK! Reason: ${reason}`, ephemeral: true });
-        }
+        };
     }
 }

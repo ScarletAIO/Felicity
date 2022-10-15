@@ -1,17 +1,199 @@
 // Handle the messageCreate event
 
 import axios from "axios";
-import {  EmbedBuilder, Message } from "discord.js";
+import {  ChannelType, EmbedBuilder, escapeMarkdown, Message, TextChannel } from "discord.js";
 import database from "../db/db";
 import MassHandler from "../handlers/MassItemChecks";
 import blacklist from "../../blacklist.json";
+
+
+async function sendToScarletAI(message: string) {
+    const out = await axios.post("https://api.scarletai.xyz/v3/analyze/msg", {
+        text: message,
+    });
+
+    return out;
+}
 
 module.exports = {
     name: "messageCreate",
     once: false,
     execute: async (message: Message) => {
         if (message.author.bot) { return; }
-        if (!message.guild) { return; }
+
+        const chatServers = [
+            "1025374379024056320",
+            "1021277081214124074",
+            "1029337449257783306",
+        ]
+
+        if (chatServers.includes(message.channel.id)) { 
+        const a = async (message: Message) => {
+
+            const bannedNSFWWords = [
+                "vagina",
+                "pussy",
+                "porn",
+            ]
+
+            for (let i = 0; i < bannedNSFWWords.length; i++) {
+                if (/(?:send(?: |$))*(?:bannedNSFWWords[i])?$/i.test(message.content)) {
+                    message.content.replace(bannedNSFWWords[i], '*'.repeat(bannedNSFWWords[i].length))
+                } else {
+                    continue;
+                }
+            }
+            
+            let dialog:any[] = [];
+            let memory: Map<string, string[]> = new Map();
+
+            const userCheck = (message: Message) => {
+                if (memory.get(message.author.id)) {
+                    return memory.get(message.author.id)?.map((x) => x.toLowerCase());
+                } else {
+                    return false;
+                }
+            }
+
+            if (!userCheck(message)) {
+                dialog.push("Felicity is a friendly and bright bot that can answer any question that people ask of her and does not swear.\nFelicity will also assist users with computer support, discord support, mental health support, and can engage in conversations with the user.\n\n");
+                dialog.push(`User: ${message.content}`);
+                dialog.push("Bot:");
+                memory.set(message.author.id, dialog);
+                console.log(memory);
+            } else {
+                dialog = userCheck(message) as any[];
+            }
+
+            const instance = axios.create({
+                baseURL: "https://api.openai.com/v1/completions",
+                headers: {
+                    "Authorization": `Bearer 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`,
+                }
+            });
+
+            const completionParams = {
+                model:"text-davinci-002",
+                prompt:dialog.join("\n"),
+                temperature:0.5,
+                max_tokens:1024,
+                top_p:1.0,
+                frequency_penalty:0.5,
+                presence_penalty:0.0,
+                stop: ["User:", "Bot:"]
+            };
+
+            try { 
+                const result = await instance.post('',completionParams);
+                //console.log(result);
+                let response:string = result.data.choices[0].text.trim();
+
+                if (/(?:the(?: |$))*(?:chatbot)?$/i.test(response)) {
+                    response = response.replace(/chatbot/i, "Felicity");
+                }
+                
+                message.channel.sendTyping().then(() => {
+                    message.reply({
+                        content: escapeMarkdown(response),
+                        allowedMentions: {
+                            repliedUser: false,
+                            "parse": [
+                                "users",
+                            ]
+                        }
+                    });
+                });
+                dialog.push("Bot:" + response);
+                // update the memory
+                try {
+                    memory.set(message.author.id, dialog);
+                } catch (err) {
+                    console.log("can't use .set() to update memory");
+                }
+            } catch (e) {
+                console.log(e);
+                message.channel.sendTyping();
+                message.reply({ content: "I'm sorry, I'm having trouble understanding you.",
+                    allowedMentions: {
+                        repliedUser: false
+                    }
+                });
+            }
+        }
+        a(message);
+        }
+
+        if (message.channel.type === ChannelType.DM) {
+            const a = async (message: Message) => {
+                
+                let dialog:any[] = [];
+                let memory: Map<string, string[]> = new Map();
+
+                const userCheck = (message: Message) => {
+                    if (memory.get(message.author.id)) {
+                        return memory.get(message.author.id)?.map((x) => x.toLowerCase());
+                    } else {
+                        return false;
+                    }
+                }
+
+                if (!userCheck(message)) {
+                    dialog.push("Bot: Hello!");
+                    dialog.push(`User: ${message.content}`);
+                    dialog.push("Bot: ");
+                    memory.set(message.author.id, dialog);
+                } else {
+                    dialog = userCheck(message) as any[];
+                }
+
+                const instance = axios.create({
+                    baseURL: "https://api.openai.com/v1/completions",
+                    headers: {
+                        "Authorization": `Bearer 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`,
+                    }
+                });
+
+                const completionParams = {
+                    model:"text-davinci-002",
+                    prompt:dialog.join("\n"),
+                    temperature:0.5,
+                    max_tokens:60,
+                    top_p:1.0,
+                    frequency_penalty:0.5,
+                    presence_penalty:0.0,
+                    stop: ["User:"]
+                };
+
+                try { 
+                    const result = await instance.post("", completionParams);
+                    //console.log(result);
+                    let response:string = result.data.choices[0].text.trim();
+
+                    if (/(?:the(?: |$))*(?:chatbot)?$/i.test(response)) {
+                        response = response.replace(/chatbot/i, "Felicity");
+                    }
+                    
+                    console.log(result.data.choices);
+                    message.reply({
+                        content: response,
+                        allowedMentions: {
+                            repliedUser: false
+                        }
+                    });
+                    dialog.push("Bot: " + response);
+                } catch (e) {
+                    console.log(e);
+                    message.reply({ content: "I'm sorry, I'm having trouble understanding you.",
+                        allowedMentions: {
+                            repliedUser: false
+                        }
+                    });
+                }
+            }
+            a(message);
+        }
+
+
 
         // Handle the Mass Item Checks
         await MassHandler(message);
@@ -22,7 +204,7 @@ module.exports = {
         const bl: {
             users: [string]
         } = JSON.parse(JSON.stringify(blacklist));
-        if (!user) {
+        if (!user && !bl.users.includes(message.author.id)) {
             database.createUser(
                 message.author.id, 
                 message.author.username, 
@@ -30,10 +212,19 @@ module.exports = {
                 message.author.avatarURL() as string, 
                 message.author.bot
             );
+            console.log(`Created user ${message.author.tag} in the database.`);
+        }
+        if (bl.users.includes(message.author.id)) {
+            console.log("Blacklisted user sent a message.");
+            return;
         }
         if (user && user.afk == 1) {
             database.setAFK(message.author.id, false, '');
-            message.reply(`Welcome back! I removed your AFK status.`);
+            message.reply({content:`Welcome back! I removed your AFK status.`,
+            "allowedMentions": {
+                "repliedUser": false
+            }
+        });
         } else {
             return;
         }

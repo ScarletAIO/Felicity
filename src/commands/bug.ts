@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder, TextChannel, roleMention, CommandInteraction } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder, TextChannel, roleMention, CommandInteraction, time } from "discord.js";
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -14,6 +14,21 @@ module.exports = {
         const embed = new EmbedBuilder()
             .setTitle("Bug Report")
             .setDescription(`**Bug:** ${bug}`)
+            .addFields({
+                name: `Reporter:`,
+                value: `${interaction.user.tag} (${interaction.user.id})`,
+                inline: true
+            },
+            {
+                name: "Bug:",
+                value: bug.toString() ?? "No bug provided.",
+                inline: true
+            },
+            {
+                name: "Time:",
+                value: time(new Date(), 'R'),
+                inline: true
+            })
             .setTimestamp(new Date)
             .setAuthor({
                 "name": interaction.user.tag, 

@@ -7,7 +7,8 @@
     "build": "rm -rf dist/ && clear && echo \"Compiling...\" && tsc && cp src/db/*.sql dist/src/db/ && echo \"Done.\"",
     "start": "clear && pm2 start dist/src/main.js --name \"Felicity\"",
     "stop": "pm2 stop 0",
-    "restart": "pm2 restart 0"
+    "restart": "npm run build && pm2 restart 0 && pm2 monit",
+    "deploy": "git add . && git commit -am \"Automated deploy from NPM\" && git push origin main"
   },
   "author": "",
   "license": "ISC",
@@ -21,7 +22,10 @@
     "discord.js": "^14.3.0",
     "dotenv": "^16.0.1",
     "fancy-log": "^2.0.0",
+    "jaro-winkler": "^0.2.8",
+    "md5": "^2.3.0",
     "node-fetch": "^3.2.10",
+    "pm2": "^5.2.0",
     "scarletai.js": "^1.0.4",
     "ts-node": "^10.9.1"
   }

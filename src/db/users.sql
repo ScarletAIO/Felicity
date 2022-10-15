@@ -5,6 +5,6 @@ CREATE TABLE IF NOT EXISTS users (
     avatar TEXT,
     bot BOOLEAN,
     guild TEXT,
-    afk BOOLEAN NOT NULL DEFAULT FALSE,
+    afk BOOLEAN DEFAULT FALSE,
     afkReason TEXT
 );

@@ -1,12 +1,15 @@
 import * as console from "fancy-log";
 require("dotenv").config();
-import { ActivityType, Client, Collection, TextChannel } from "discord.js";
+import { ActivityType, Client, Collection, EmbedBuilder, TextChannel } from "discord.js";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
 import path from "node:path";
 import fs from "node:fs";
 import db from "../db/db";
 import axios from "axios";
+import os from "node:os";
+import pm2 from "pm2";
+
 const { TOKEN: token, BOTID: clientId, DISCORDSTOKEN: discordToken } = process.env;
 
 module.exports = {
@@ -63,16 +66,68 @@ module.exports = {
             }
         );
 
-        (client.channels.cache.get("1015836371937665135") as TextChannel).send({
-            content: "List of servers I'm in:",
-            embeds: [
-                {
-                    title: "Servers",
-                    description: client.guilds.cache.map((guild) => guild.name).join("\n- ").toString(),
-                    color: 0x00ff00
-                }
-            ]
-        })
+
+            // get the process uptime
+            const uptime = process.uptime();
+            // get the system uptime
+            const sysUptime = os.uptime();
+            console.info(`System uptime: ${sysUptime}`);
+            console.default.info(`Uptime: ${uptime}ms`);
+            // convert to days from ms
+            const days = Math.floor(uptime / (1000 * 60 * 60 * 24));
+            // convert to hours from ms
+            const hours = Math.floor((uptime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            // convert to minutes from ms
+            const minutes = Math.floor((uptime % (1000 * 60 * 60)) / (1000 * 60));
+            // convert to seconds from ms
+            const seconds = Math.floor((uptime % (1000 * 60)) / 1000);
+            const totalUptime = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+            const sysDays = Math.floor(sysUptime / 86400);
+            const sysHours = Math.floor((sysUptime % 86400) / (1000 * 60 * 60));
+            const sysMinutes = Math.floor((sysUptime % (86400 / 60)) / 60);
+            const totalSysUptime = `${sysDays}d ${sysHours}h ${sysMinutes}m`;
+
+            (client.channels.cache.get("1015836371937665135") as TextChannel).send({
+                content: "Reboot Successful!",
+                embeds: [
+                    new EmbedBuilder()
+                    .setTitle("Reboot Successful!")
+                    .setDescription(`HostName: ${os.hostname()}`)
+                    .addFields({
+                        name: "Uptime",
+                        // make the uptime human readable
+                        value: `Process: **${totalUptime}**\nSystem: **${totalSysUptime}**`,
+                        inline: true
+                    },
+                    {
+                        name: "CPU status",
+                        value: `CPU Usage: \`${Math.round((os.loadavg()[0] / os.cpus().length) * 100)}\`%\nCPU Cores: \`${require("os").cpus().length}\``,
+                        inline: true
+                    },
+                    {
+                        name: "Memory status",
+                        value: `Memory Usage: \`${
+                            Math.round(
+                                (process.memoryUsage().heapUsed / 1024 / 1024) * 100
+                            ) / 100
+                        }\`MB\nMemory Total: \`${Math.round((os.totalmem() / 1024 / 1024) * 100) / 100}\`MB`,
+                        inline: true
+                    },
+                    {
+                        name: "List of guilds I'm in",
+                        value: client.guilds.cache.map((guild) => guild.name).join(",\n"),
+                        inline: false
+                    },
+                    {
+                        name: "Number of \"Hood Network's\" servers",
+                        value: "s"
+                    })
+                    .setTimestamp()
+                ]
+            });
+           
+        
 
         // @ts-ignore
         client.commands = new Collection();
@@ -91,13 +146,26 @@ module.exports = {
         // @ts-ignore
         for (const cmd of client.commands.values()) {
             if (cmd.beta) {
-                continue; // Skip beta commands
+                try {
+                    await rest.put(Routes.applicationGuildCommands(clientId as string, "973788333169856542"), {body: [cmd.data.toJSON()]})
+                    .then(() => {
+                        console.info(`Registered ${cmd.data.name} in the beta guild`);
+                    });
+                }
+                catch (e) {
+                    console.error(e);
+                }
             } else {
                 commands.push(cmd.data.toJSON());
+                // @ts-ignore
+                client.commands.set(cmd.data.name, cmd);
+                // @ts-ignore
+                console.info(client.commands.map((cmd) => cmd));
             }
         }
 
-        for (let guild of client.guilds.cache.map((guilds) => guilds)) {
+        /**
+         * for (let guild of client.guilds.cache.map((guilds) => guilds)) {
             try {
                 await rest.put(
                     Routes.applicationGuildCommands(clientId as string, guild.id),
@@ -109,6 +177,8 @@ module.exports = {
                 console.error(e);
             }
         }
+        */
+
         await rest.put(Routes.applicationCommands(clientId as string), {body:commands}).then(()=>{console.info("Commands Deployed")});
         return;
     }

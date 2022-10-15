@@ -2,6 +2,7 @@
 blacklist.json
 config.json
 db.sqlite
+index.js
 
 # Logs
 logs

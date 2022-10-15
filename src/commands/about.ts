@@ -11,6 +11,11 @@ module.exports =  {
         interaction.client.guilds.cache.forEach((guild) => {
             return totalUsers += guild.memberCount;
         });
+        const uptime = process.uptime();
+        const days = Math.floor(uptime / 86400);
+        const hours = Math.floor((uptime % 86400) / (1000 * 60 * 60));
+        const minutes = Math.floor((uptime % (86400 / 60)) / 60);
+        const totalUptime = `${days}d ${hours}h ${minutes}m`;
         const embed = new EmbedBuilder()
             .setAuthor({
                 "name": interaction.client.user?.tag as string,
@@ -18,7 +23,7 @@ module.exports =  {
             })
             .setColor("Blue")
             .setTitle("About Me")
-            .setDescription("I'm a [support](https://discord.gg/crittersden) bot for handling automated moderation and more!")
+            .setDescription("I'm a [support](https://discord.gg/crittersden) bot for handling automated moderation and more!\nUptime: `" + totalUptime + "`")
             .addFields([
                 {
                     "name": "Developer",
@@ -70,6 +75,11 @@ module.exports =  {
                     value: `\`${
                         totalUsers
                     }\` users`,
+                    inline: true
+                },
+                {
+                    name: "T&C and Privacy Policy",
+                    value: "[Terms and Conditions](https://github.com/ScarletAIO/API/blob/main/TnC.md)\n[Privacy Policy](https://github.com/ScarletAIO/API/blob/main/PrivacyPolicy.md)",
                     inline: true
                 }
             ])

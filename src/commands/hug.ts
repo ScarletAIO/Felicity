@@ -8,7 +8,7 @@ module.exports = {
         .addUserOption(option => option.setName("user").setDescription("The user to hug.").setRequired(true))
         .setDMPermission(false),
     async execute(interaction: CommandInteraction) {
-        const user = interaction.options.get("user")?.value as string;
+        const user = interaction.options.getMember("user")?.toString();
         if (!user) {
             return await interaction.reply({ content: "You did not provide a user.", ephemeral: true });
         };
@@ -17,7 +17,7 @@ module.exports = {
         // create an embed
         const embed = new EmbedBuilder()
             .setTitle("Hug")
-            .setDescription(`${interaction.user.tag} hugged ${userMention(user)}!`)
+            .setDescription(`${userMention(interaction.user.id)} hugged ${user}!`)
             .setImage(image.url)
             .setColor("#FF0000");
         return await interaction.reply({ content: "Nawwww", embeds: [embed] });

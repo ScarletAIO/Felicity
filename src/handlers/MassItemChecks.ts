@@ -12,6 +12,7 @@ export default async function MassHandler(msg: Message) {
         toggle_invites: noInvites, 
         toggle_nsfw: noNSFW,
         toggle_mentions: noMentions,
+        toggle_spam: noSpam,
     } = guild;
 
     switch(true) {
@@ -166,6 +167,54 @@ export default async function MassHandler(msg: Message) {
                 //TODO: rebuild Scarlet's NSFW API
                 // REF: https://github.com/KazutoKashima/ScarletNSFW
                 return;
+            }
+
+        case noSpam:
+            const lastMessage = (await msg.channel.messages.fetch({ limit: 2 })).last();
+            let spamCounter: number = 0;
+            // check to see if the message is the same as the last message
+            if (msg.content === lastMessage?.content) {
+                // if it is, increment the counter
+                spamCounter++;
+            } else {
+                // if it isn't, reset the counter
+                spamCounter = 0;
+            }
+            // if the counter is greater than 5, delete the message
+            if (spamCounter > 5) {
+                msg.delete();
+                msg.author.send({
+                    content: `Hey ${msg.author}, your message* was deleted because it was spam!\n\n*\`\`\`\n${msg.content}\`\`\``
+                }).catch(() => {
+                    return; // ignore if we can't DM the user
+                }).finally(() => {
+                    // Send a message to the modlog channel
+                    const channel = msg.guild?.channels.cache.get(guild.log_channel as string);
+                    if (channel) {
+                        channel.fetch().then((c) => {
+                            // Create an embed and send it to the channel
+                            const embed = new EmbedBuilder()
+                                .setTitle("Message Deleted")
+                                .setDescription(`A message was deleted in ${msg.channel} by ${msg.author}`)
+                                .addFields([
+                                    {
+                                        name: "Message",
+                                        value: `\`\`\`\n${msg.content}\`\`\``,
+                                        inline: false
+                                    },
+                                    {
+                                        name: "Reason",
+                                        value: "Spam",
+                                        inline: false
+                                    }
+                                ])
+                                .setColor("Red")
+                                .setTimestamp();
+                            // @ts-ignore
+                            c.send({ embeds: [embed] });
+                        }).catch(console.error);
+                    }
+                })
             }
         default: return;
     }
